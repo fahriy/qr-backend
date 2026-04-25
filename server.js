@@ -5,9 +5,9 @@ app.get("/track", async (req, res) => {
 
   const ua = req.headers["user-agent"];
 
-  const geo = await fetch(`https://ipapi.co/${ip}/json/`)
-    .then(r => r.json())
-    .catch(() => ({}));
+  const geo = await fetch(`https://ipwho.is/${ip}`)
+  .then(r => r.json())
+  .catch(() => ({}));
 
   const time = new Date().toLocaleString("tr-TR", {
     timeZone: "Europe/Istanbul"
