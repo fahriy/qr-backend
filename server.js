@@ -1,13 +1,12 @@
 const express = require('express');
 const app = express();
 
-// CORS ayarları (TÜM domainlere izin ver)
+// CORS ayarları
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
-  // OPTIONS isteklerine hemen cevap ver
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
@@ -26,30 +25,21 @@ app.get("/track", async (req, res) => {
     // 2. User Agent
     const ua = req.headers["user-agent"];
     
-    // 3. Cihaz saatini al
+    // 3. Cihaz saatini al (HTML'den gelen formatlanmış saat)
     let deviceTimeFormatted = "Bilinmiyor";
     let timezone = "Bilinmiyor";
     
     if (req.query.deviceTime) {
-      let deviceTime = new Date(req.query.deviceTime);
-      
-      // 1 gün ekle (geçici çözüm)
-      deviceTime.setDate(deviceTime.getDate() + 1);
-      
-      const day = String(deviceTime.getDate()).padStart(2, '0');
-      const month = String(deviceTime.getMonth() + 1).padStart(2, '0');
-      const year = deviceTime.getFullYear();
-      const hours = String(deviceTime.getHours()).padStart(2, '0');
-      const minutes = String(deviceTime.getMinutes()).padStart(2, '0');
-      const seconds = String(deviceTime.getSeconds()).padStart(2, '0');
-      deviceTimeFormatted = `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+      // HTML'den gelen saati AYNEN kullan (hiçbir değişiklik yapma)
+      deviceTimeFormatted = req.query.deviceTime;
       timezone = req.query.timezone || "Bilinmiyor";
       
       console.log(`📥 Gelen IP: ${ip}`);
-      console.log(`📥 Formatlanmış saat: ${deviceTimeFormatted}`);
+      console.log(`📥 Gelen saat (konsoldaki ile aynı): ${deviceTimeFormatted}`);
+      console.log(`📥 Zaman dilimi: ${timezone}`);
     }
     
-    // 4. Coğrafi veri
+    // 4. Coğrafi veri (ip-api.com)
     let city = "-", country = "-", isp = "-";
     try {
       const geo = await fetch(`http://ip-api.com/json/${ip}?fields=city,country,isp`);
@@ -57,11 +47,12 @@ app.get("/track", async (req, res) => {
       city = data.city || "-";
       country = data.country || "-";
       isp = data.isp || "-";
+      console.log(`📍 Konum: ${city}, ${country} | ISP: ${isp}`);
     } catch(e) {
       console.log("Coğrafi API hatası:", e.message);
     }
     
-    // 5. Telegram mesajı
+    // 5. Telegram mesajını oluştur
     const msg = `🚗 QR TARANDI
 
 🌍 IP: ${ip}
