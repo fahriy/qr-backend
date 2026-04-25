@@ -23,11 +23,11 @@ app.get("/track", async (req, res) => {
 ⏰ Saat: ${new Date().toLocaleString()}
 `;
 
-  await fetch(`https://api.telegram.org/botBOT_TOKEN/sendMessage`, {
+  await fetch(`https://api.telegram.org/bot8381262942:AAGb0yeCVcl4-IPL_dAhxm7lOjdE7DEKTaA/sendMessage`, {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body: JSON.stringify({
-      chat_id: "CHAT_ID",
+      chat_id: "8706199771",
       text: msg
     })
   });
