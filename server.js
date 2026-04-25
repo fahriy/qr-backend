@@ -1,11 +1,18 @@
 const express = require('express');
 const app = express();
-
-// JSON verileri okuyabilmek için
 app.use(express.json());
 
-// POST endpoint (QR koddan gelecek)
+// 📌 HEM GET hem POST destekle
+app.get("/track", async (req, res) => {
+  await handleRequest(req, res);
+});
+
 app.post("/track", async (req, res) => {
+  await handleRequest(req, res);
+});
+
+// Ortak işlem fonksiyonu
+async function handleRequest(req, res) {
   try {
     // 1. IP adresini al
     const forwarded = req.headers["x-forwarded-for"];
@@ -14,12 +21,15 @@ app.post("/track", async (req, res) => {
     // 2. User Agent
     const ua = req.headers["user-agent"];
     
-    // 3. 📱 CİHAZIN SAATİ (en doğru!)
+    // 3. Cihaz saatini al (GET'te query'den, POST'ta body'den)
     let deviceTimeFormatted = "Bilinmiyor";
     let timezone = "Bilinmiyor";
     
-    if (req.body.deviceTime) {
-      const deviceTime = new Date(req.body.deviceTime);
+    let deviceTimeRaw = req.query.deviceTime || req.body?.deviceTime;
+    let timezoneRaw = req.query.timezone || req.body?.timezone;
+    
+    if (deviceTimeRaw) {
+      const deviceTime = new Date(deviceTimeRaw);
       const day = String(deviceTime.getDate()).padStart(2, '0');
       const month = String(deviceTime.getMonth() + 1).padStart(2, '0');
       const year = deviceTime.getFullYear();
@@ -27,10 +37,10 @@ app.post("/track", async (req, res) => {
       const minutes = String(deviceTime.getMinutes()).padStart(2, '0');
       const seconds = String(deviceTime.getSeconds()).padStart(2, '0');
       deviceTimeFormatted = `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
-      timezone = req.body.timezone || "Bilinmiyor";
+      timezone = timezoneRaw || "Bilinmiyor";
     }
     
-    // 4. Coğrafi veri (ip-api.com)
+    // 4. Coğrafi veri
     let city = "-", country = "-", isp = "-";
     try {
       const geo = await fetch(`http://ip-api.com/json/${ip}?fields=city,country,isp`);
@@ -42,7 +52,7 @@ app.post("/track", async (req, res) => {
       console.log("Coğrafi API hatası:", e.message);
     }
     
-    // 5. Telegram mesajını oluştur
+    // 5. Telegram mesajı
     const msg = `🚗 QR TARANDI
 
 🌍 IP: ${ip}
@@ -55,8 +65,8 @@ app.post("/track", async (req, res) => {
 ⏰ Cihaz Saati: ${deviceTimeFormatted}
 🌐 Zaman Dilimi: ${timezone}`;
 
-    // 6. Telegram'a gönder (BOT_TOKEN ve CHAT_ID'yi kendi bilgilerinle değiştir!)
-    await fetch(`https://api.telegram.org/bot8381262942:AAGb0yeCVcl4-IPL_dAhxm7lOjdE7DEKTaA/sendMessage`, {
+    // 6. Telegram'a gönder (BOT_TOKEN'ını değiştir!)
+    await fetch(`https://api.telegram.org/bot***/sendMessage`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
@@ -72,14 +82,8 @@ app.post("/track", async (req, res) => {
     console.error("Hata:", error.message);
     res.status(500).send("Error");
   }
-});
+}
 
-// GET endpoint (test için)
-app.get("/", (req, res) => {
-  res.send("Server is running");
-});
-
-// Sunucuyu başlat
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
