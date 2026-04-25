@@ -1,69 +1,38 @@
 app.get("/track", async (req, res) => {
-  // KESİN ÇÖZÜM: SADECE ilk IP'yi al
-  let ip = req.headers["x-forwarded-for"];
+  // SADECE İLK IP'Yİ AL
+  const forwarded = req.headers["x-forwarded-for"];
+  const ip = forwarded ? forwarded.split(",")[0].trim() : req.socket.remoteAddress;
   
-  if (ip) {
-    // Eğer birden fazla IP varsa (virgülle ayrılmış), ilkini al
-    ip = ip.split(",")[0].trim();
-  } else {
-    // Fallback: direkt bağlantı IP'si
-    ip = req.socket.remoteAddress;
-  }
-  
-  // IPv6 prefix'ini temizle
-  ip = ip.replace("::ffff:", "");
-  
-  // User Agent
   const ua = req.headers["user-agent"];
   
-  // Coğrafi veri (ip-api.com çalışan bir API)
-  let geo = {};
+  // Coğrafi veri
+  let city = "-", country = "-", isp = "-";
   try {
-    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,isp`);
-    const data = await response.json();
-    if (data.status === "success") {
-      geo = {
-        city: data.city,
-        country: data.country,
-        isp: data.isp
-      };
-    }
-  } catch (err) {
-    console.log("Coğrafi API hatası:", err.message);
-  }
+    const geo = await fetch(`http://ip-api.com/json/${ip}?fields=city,country,isp`).then(r => r.json());
+    city = geo.city || "-";
+    country = geo.country || "-";
+    isp = geo.isp || "-";
+  } catch(e) {}
   
-  // Tarih (DOĞRU format)
+  // Tarih
   const now = new Date();
-  const day = String(now.getDate()).padStart(2, '0');
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const year = now.getFullYear();
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const seconds = String(now.getSeconds()).padStart(2, '0');
-  const time = `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+  const time = `${now.getDate().toString().padStart(2,'0')}.${(now.getMonth()+1).toString().padStart(2,'0')}.${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
   
-  // Telegram mesajı
-  const msg = `
-🚗 QR TARANDI
+  const msg = `🚗 QR TARANDI
 
 🌍 IP: ${ip}
-📍 Şehir: ${geo.city || "-"}
-🌎 Ülke: ${geo.country || "-"}
-📡 ISP: ${geo.isp || "-"}
+📍 Şehir: ${city}
+🌎 Ülke: ${country}
+📡 ISP: ${isp}
 
 📱 Cihaz: ${ua}
 
-⏰ Saat: ${time}
-`;
+⏰ Saat: ${time}`;
 
-  // Telegram'a gönder
-  await fetch(`https://api.telegram.org/bot8381262942:AAGb0yeCVcl4-IPL_dAhxm7lOjdE7DEKTaA/sendMessage`, {
+  await fetch(`https://api.telegram.org/bot***/sendMessage`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: "8706199771",
-      text: msg
-    })
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({chat_id: "8706199771", text: msg})
   });
   
   res.send("OK");
