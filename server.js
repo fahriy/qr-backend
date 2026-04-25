@@ -56,7 +56,7 @@ app.post("/track", async (req, res) => {
 🌐 Zaman Dilimi: ${timezone}`;
 
     // 6. Telegram'a gönder (BOT_TOKEN ve CHAT_ID'yi kendi bilgilerinle değiştir!)
-    await fetch(`https://api.telegram.org/bot***/sendMessage`, {
+    await fetch(`https://api.telegram.org/bot8381262942:AAGb0yeCVcl4-IPL_dAhxm7lOjdE7DEKTaA/sendMessage`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
