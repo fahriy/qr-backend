@@ -36,7 +36,7 @@ app.get("/track", async (req, res) => {
 ⏰ Saat: ${time}`;
 
   try {
-    await fetch(`https://api.telegram.org/bot***/sendMessage`, {
+    await fetch(`https://api.telegram.org/bot8381262942:AAGb0yeCVcl4-IPL_dAhxm7lOjdE7DEKTaA/sendMessage`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({chat_id: "8706199771", text: msg})
