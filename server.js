@@ -1,14 +1,17 @@
-const express = require("express");
-const app = express();
-
 app.get("/track", async (req, res) => {
 
-  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+  const rawIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+  const ip = rawIp.split(",")[0].trim();
+
   const ua = req.headers["user-agent"];
 
   const geo = await fetch(`https://ipapi.co/${ip}/json/`)
     .then(r => r.json())
     .catch(() => ({}));
+
+  const time = new Date().toLocaleString("tr-TR", {
+    timeZone: "Europe/Istanbul"
+  });
 
   const msg = `
 🚗 QR TARANDI
@@ -20,7 +23,7 @@ app.get("/track", async (req, res) => {
 
 📱 Cihaz: ${ua}
 
-⏰ Saat: ${new Date().toLocaleString()}
+⏰ Saat: ${time}
 `;
 
   await fetch(`https://api.telegram.org/bot8381262942:AAGb0yeCVcl4-IPL_dAhxm7lOjdE7DEKTaA/sendMessage`, {
@@ -34,5 +37,3 @@ app.get("/track", async (req, res) => {
 
   res.send("OK");
 });
-
-app.listen(3000);
