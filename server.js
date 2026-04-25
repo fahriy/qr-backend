@@ -1,3 +1,6 @@
+const express = require("express");
+const app = express();
+
 app.get("/track", async (req, res) => {
 
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
@@ -20,7 +23,7 @@ app.get("/track", async (req, res) => {
 ⏰ Saat: ${new Date().toLocaleString()}
 `;
 
-  await fetch(`https://api.telegram.org/botTOKEN/sendMessage`, {
+  await fetch(`https://api.telegram.org/botBOT_TOKEN/sendMessage`, {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body: JSON.stringify({
@@ -31,3 +34,5 @@ app.get("/track", async (req, res) => {
 
   res.send("OK");
 });
+
+app.listen(3000);
