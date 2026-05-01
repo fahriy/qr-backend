@@ -30,16 +30,17 @@ app.get("/track", async (req, res) => {
     let timezone = "Bilinmiyor";
     
     if (req.query.deviceTime) {
-      // HTML'den gelen saati AYNEN kullan (hiçbir değişiklik yapma)
       deviceTimeFormatted = req.query.deviceTime;
       timezone = req.query.timezone || "Bilinmiyor";
-      
-      console.log(`📥 Gelen IP: ${ip}`);
-      console.log(`📥 Gelen saat (konsoldaki ile aynı): ${deviceTimeFormatted}`);
-      console.log(`📥 Zaman dilimi: ${timezone}`);
     }
     
-    // 4. Coğrafi veri (ip-api.com)
+    // 4. KULLANICI BİLGİLERİNİ AL (formdan gelenler)
+    const userName = req.query.user_name || "";
+    const userPhone = req.query.user_phone || "";
+    const ownerPhone = req.query.owner_phone || "";
+    const action = req.query.action || "";
+    
+    // 5. Coğrafi veri (ip-api.com)
     let city = "-", country = "-", isp = "-";
     try {
       const geo = await fetch(`http://ip-api.com/json/${ip}?fields=city,country,isp`);
@@ -52,8 +53,32 @@ app.get("/track", async (req, res) => {
       console.log("Coğrafi API hatası:", e.message);
     }
     
-    // 5. Telegram mesajını oluştur
-    const msg = `🚗 QR TARANDI
+    // 6. OLAY TÜRÜNE GÖRE MESAJ OLUŞTUR
+    let msg = "";
+    
+    if (userName && userPhone) {
+      // ARANMA TALEBİ (form gönderildi)
+      msg = `📞 ARANMA TALEBİ
+
+👤 İsim: ${userName}
+📱 Telefon: ${userPhone}
+🚗 Aranacak Numara: ${ownerPhone}
+🎯 İşlem: ${action}
+
+🌍 IP: ${ip}
+📍 Şehir: ${city}
+🌎 Ülke: ${country}
+📡 ISP: ${isp}
+
+📱 Cihaz: ${ua}
+⏰ Cihaz Saati: ${deviceTimeFormatted}
+🌐 Zaman Dilimi: ${timezone}`;
+      
+      console.log(`📞 ARANMA TALEBİ - İsim: ${userName}, Telefon: ${userPhone}`);
+      
+    } else {
+      // QR TARANDI (sayfa açılış)
+      msg = `🚗 QR TARANDI
 
 🌍 IP: ${ip}
 📍 Şehir: ${city}
@@ -64,21 +89,29 @@ app.get("/track", async (req, res) => {
 
 ⏰ Cihaz Saati: ${deviceTimeFormatted}
 🌐 Zaman Dilimi: ${timezone}`;
-
-    // 6. Telegram'a gönder (BOT_TOKEN'ını değiştir!)
-    const botToken = "***"; // Bot token'ını buraya yaz
+      
+      console.log(`🚗 QR TARANDI - IP: ${ip}`);
+    }
+    
+    // 7. Telegram'a gönder
+    const botToken = "8381262942:AAG9HIBIHWpNQlGH2yZ6m0LQ22-19xRTtD4";
     const chatId = "8706199771";
     
-    await fetch(`https://api.telegram.org/bot8381262942:AAG9HIBIHWpNQlGH2yZ6m0LQ22-19xRTtD4/sendMessage`, {
+    const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
-        chat_id: 8706199771,
+        chat_id: chatId,
         text: msg
       })
     });
     
-    console.log("✅ Telegram'a gönderildi");
+    if (telegramResponse.ok) {
+      console.log("✅ Telegram'a gönderildi");
+    } else {
+      console.log("❌ Telegram hatası:", await telegramResponse.text());
+    }
+    
     res.status(200).send("OK");
     
   } catch (error) {
