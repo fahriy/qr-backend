@@ -69,7 +69,7 @@ app.get("/track", async (req, res) => {
     const botToken = "***"; // Bot token'ını buraya yaz
     const chatId = "8706199771";
     
-    await fetch(`https://api.telegram.org/bot8381262942:AAGb0yeCVcl4-IPL_dAhxm7lOjdE7DEKTaA/sendMessage`, {
+    await fetch(`https://api.telegram.org/bot8381262942:AAG9HIBIHWpNQlGH2yZ6m0LQ22-19xRTtD4/sendMessage`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
