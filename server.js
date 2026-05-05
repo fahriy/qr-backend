@@ -22,78 +22,32 @@ app.get("/track", async (req, res) => {
     const forwarded = req.headers["x-forwarded-for"];
     const ip = forwarded ? forwarded.split(",")[0].trim() : req.socket.remoteAddress;
     
-    // 2. User Agent
-    const ua = req.headers["user-agent"];
+    // 2. KULLANICI BİLGİLERİ (formdan gelenler)
+    const isim = req.query.isim || "-";
+    const telefon = req.query.telefon || "-";
+    const notMetni = req.query.not || "-";
+    const islem = req.query.islem || "-";
     
-    // 3. Cihaz saatini al (HTML'den gelen formatlanmış saat)
-    let deviceTimeFormatted = "Bilinmiyor";
-    let timezone = "Bilinmiyor";
+    // 3. Cihaz bilgileri
+    const cihazSaati = req.query.cihaz_saati || "-";
+    const zamanDilimi = req.query.zaman_dilimi || "-";
     
-    if (req.query.deviceTime) {
-      deviceTimeFormatted = req.query.deviceTime;
-      timezone = req.query.timezone || "Bilinmiyor";
-    }
-    
-    // 4. KULLANICI BİLGİLERİNİ AL (formdan gelenler)
-    const userName = req.query.user_name || "";
-    const userPhone = req.query.user_phone || "";
-    const ownerPhone = req.query.owner_phone || "";
-    const action = req.query.action || "";
-    
-    // 5. Coğrafi veri (ip-api.com)
-    let city = "-", country = "-", isp = "-";
-    try {
-      const geo = await fetch(`http://ip-api.com/json/${ip}?fields=city,country,isp`);
-      const data = await geo.json();
-      city = data.city || "-";
-      country = data.country || "-";
-      isp = data.isp || "-";
-      console.log(`📍 Konum: ${city}, ${country} | ISP: ${isp}`);
-    } catch(e) {
-      console.log("Coğrafi API hatası:", e.message);
-    }
-    
-    // 6. OLAY TÜRÜNE GÖRE MESAJ OLUŞTUR
-    let msg = "";
-    
-    if (userName && userPhone) {
-      // ARANMA TALEBİ (form gönderildi)
-      msg = `📞 ARANMA TALEBİ
+    // 4. Telegram mesajını oluştur (sadece istenen bilgiler)
+    const msg = `📞 ARANMA TALEBİ
 
-👤 İsim: ${userName}
-📱 Telefon: ${userPhone}
-🚗 Aranacak Numara: ${ownerPhone}
-🎯 İşlem: ${action}
+👤 İsim: ${isim}
+📞 Telefon: ${telefon}
+📝 Not: ${notMetni}
+🎯 İşlem: ${islem}
 
 🌍 IP: ${ip}
-📍 Şehir: ${city}
-🌎 Ülke: ${country}
-📡 ISP: ${isp}
-
-📱 Cihaz: ${ua}
-⏰ Cihaz Saati: ${deviceTimeFormatted}
-🌐 Zaman Dilimi: ${timezone}`;
-      
-      console.log(`📞 ARANMA TALEBİ - İsim: ${userName}, Telefon: ${userPhone}`);
-      
-    } else {
-      // QR TARANDI (sayfa açılış)
-      msg = `🚗 QR TARANDI
-
-🌍 IP: ${ip}
-📍 Şehir: ${city}
-🌎 Ülke: ${country}
-📡 ISP: ${isp}
-
-📱 Cihaz: ${ua}
-
-⏰ Cihaz Saati: ${deviceTimeFormatted}
-🌐 Zaman Dilimi: ${timezone}`;
-      
-      console.log(`🚗 QR TARANDI - IP: ${ip}`);
-    }
+⏰ Cihaz Saati: ${cihazSaati}
+🌐 Zaman Dilimi: ${zamanDilimi}`;
     
-    // 7. Telegram'a gönder
+    console.log(`📞 ARANMA TALEBİ - İsim: ${isim}, Telefon: ${telefon}`);
+    console.log(msg);
+    
+    // 5. Telegram'a gönder
     const botToken = "8381262942:AAG9HIBIHWpNQlGH2yZ6m0LQ22-19xRTtD4";
     const chatId = "8706199771";
     
